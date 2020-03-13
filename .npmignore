@@ -1,0 +1,6 @@
+src
+.vscode
+tsconfig.json
+junit.xml
+.eslintignore
+.eslintrc.js
