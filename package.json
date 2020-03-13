@@ -2,6 +2,9 @@
     "name": "@tailwindapp/logger",
     "description": "Structured Logger for Tailwind",
     "version": "0.1.1",
+    "engines": {
+        "node": ">=10.3.0"
+    },
     "private": false,
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
