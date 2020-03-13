@@ -51,13 +51,13 @@ export interface LambdaLog extends Log {
   source: 'lambda';
   aws: {
     context: {
-      functionName: string;
-      functionVersion: string;
-      invokedFunctionArn: string;
-      memoryLimitInMB: string;
-      awsRequestId: string;
-      logGroupName: string;
-      logStreamName: string;
+      functionName?: string;
+      functionVersion?: string;
+      invokedFunctionArn?: string;
+      memoryLimitInMB?: string;
+      awsRequestId?: string;
+      logGroupName?: string;
+      logStreamName?: string;
     };
   };
 }

@@ -83,4 +83,35 @@ describe('LambdaLogger' ,  () => {
 
     restoreConsole();
   });
+
+  test('Logger works without context', () => {
+    const restoreConsole = mockConsole();
+
+    const expectedData = {
+      'user_id' : '4242'
+    };
+
+    const expectedMetrics = {
+      'user_count': 16
+    };
+
+    const log = new LambdaLogger({
+      service: 'test',
+      logLevel: 'debug'
+    });
+
+    log.info('Info Message', {
+      data: expectedData,
+      metrics: expectedMetrics
+    });
+
+    const logEntry = JSON.parse(console.log['mock']['calls'][0][0]) ;
+
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(logEntry.data).toEqual(expectedData);
+    expect(logEntry.metrics).toEqual(expectedMetrics);
+
+    restoreConsole();
+  });
+
 });

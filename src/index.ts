@@ -17,9 +17,9 @@ export class LambdaLogger {
   private logLevel: LOG_SEVERITY;
   private logId: string;
   private service: string;
-  private context: Context;
+  private context?: Context;
 
-  constructor({ service, context, logLevel = LOG_WARNING }: LoggerConstructorOptions) {
+  constructor({ service, context = null, logLevel = LOG_WARNING }: LoggerConstructorOptions) {
     this.service = service;
     this.context = context;
     this.logLevel = logLevel;
@@ -49,13 +49,13 @@ export class LambdaLogger {
       metrics: metrics,
       aws: {
         context: {
-          functionName: this.context.functionName,
-          functionVersion: this.context.functionVersion,
-          invokedFunctionArn: this.context.invokedFunctionArn,
-          memoryLimitInMB: this.context.memoryLimitInMB,
-          awsRequestId: this.context.awsRequestId,
-          logGroupName: this.context.logGroupName,
-          logStreamName: this.context.logStreamName
+          functionName: this.context?.functionName,
+          functionVersion: this.context?.functionVersion,
+          invokedFunctionArn: this.context?.invokedFunctionArn,
+          memoryLimitInMB: this.context?.memoryLimitInMB,
+          awsRequestId: this.context?.awsRequestId,
+          logGroupName: this.context?.logGroupName,
+          logStreamName: this.context?.logStreamName
         }
       },
       logId: this.logId,
@@ -90,5 +90,5 @@ export type LogWriterFunction = (level: LOG_SEVERITY, message: Log['message'], o
 export type LoggerConstructorOptions = {
   service: string;
   logLevel?: LOG_SEVERITY;
-  context: Context;
+  context?: Context;
 };
