@@ -7,7 +7,13 @@ import shortid from 'shortid';
  * Used to identify lambda functions that
  * are run in the same context
  */
-const executionId = shortid.generate();
+const logId = shortid.generate();
+
+/**
+ * We want the logger to be a singleton
+ * so we cache it in the module.
+ */
+let logInstance: LambdaLogger;
 
 /**
  * This logger will attach logs information
@@ -15,15 +21,28 @@ const executionId = shortid.generate();
  */
 export class LambdaLogger {
   private logLevel: LOG_SEVERITY;
-  private logId: string;
   private service: string;
   private context?: Context;
 
   constructor({ service, context = null, logLevel = LOG_WARNING }: LoggerConstructorOptions) {
-    this.service = service;
+    if(!logInstance) {
+      logInstance = this;
+      this.service = service;
+      this.context = context;
+      this.logLevel = logLevel;
+
+    }
+
+    return logInstance;
+  }
+
+  /**
+   * Sets the lambda context after
+   * the logger has been constructed
+   * @param context
+   */
+  setLambdaContext(context: Context): void {
     this.context = context;
-    this.logLevel = logLevel;
-    this.logId = shortid.generate();
   }
 
   /**
@@ -58,8 +77,7 @@ export class LambdaLogger {
           logStreamName: this.context?.logStreamName
         }
       },
-      logId: this.logId,
-      executionId: executionId,
+      logId: logId,
       process: {
         memoryUsage: process.memoryUsage(),
         pid: process.pid,

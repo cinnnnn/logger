@@ -33,11 +33,6 @@ export interface Log {
    * logger instance
    */
   logId: string;
-  /**
-   * A unique id for each
-   * node container
-   */
-  executionId: string;
 
   process:  {
     memoryUsage: NodeJS.MemoryUsage;

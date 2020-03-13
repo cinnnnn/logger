@@ -14,6 +14,10 @@ const context = {
 };
 
 describe('LambdaLogger' ,  () => {
+  const log = new LambdaLogger({
+    service: 'test',
+    logLevel: 'error'
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,12 +27,6 @@ describe('LambdaLogger' ,  () => {
   test('Notice doesn\'t log with Error level', () => {
     const restoreConsole = mockConsole();
 
-    const log = new LambdaLogger({
-      service: 'test',
-      context: context as any,
-      logLevel: 'error'
-    });
-
     log.notice('Notice Message');
     log.notice('Notice Message');
 
@@ -37,14 +35,8 @@ describe('LambdaLogger' ,  () => {
     restoreConsole();
   });
 
-  test('Error logs on Notice level', () => {
+  test('Critical logs on Error level', () => {
     const restoreConsole = mockConsole();
-
-    const log = new LambdaLogger({
-      service: 'test',
-      context: context as any,
-      logLevel: 'notice'
-    });
 
     log.critical('Critical Message');
 
@@ -53,7 +45,7 @@ describe('LambdaLogger' ,  () => {
     restoreConsole();
   });
 
-  test('Debug logs on Debug level with data and metrics', () => {
+  test('Error logs on Error level with data and metrics', () => {
     const restoreConsole = mockConsole();
 
     const expectedData = {
@@ -64,13 +56,7 @@ describe('LambdaLogger' ,  () => {
       'user_count': 16
     };
 
-    const log = new LambdaLogger({
-      service: 'test',
-      context: context as any,
-      logLevel: 'debug'
-    });
-
-    log.debug('Debug Message', {
+    log.error('Error Message', {
       data: expectedData,
       metrics: expectedMetrics
     });
@@ -84,7 +70,7 @@ describe('LambdaLogger' ,  () => {
     restoreConsole();
   });
 
-  test('Logger works without context', () => {
+  test('Logger with context', () => {
     const restoreConsole = mockConsole();
 
     const expectedData = {
@@ -95,12 +81,9 @@ describe('LambdaLogger' ,  () => {
       'user_count': 16
     };
 
-    const log = new LambdaLogger({
-      service: 'test',
-      logLevel: 'debug'
-    });
+    log.setLambdaContext(context as any);
 
-    log.info('Info Message', {
+    log.alert('Alert Message', {
       data: expectedData,
       metrics: expectedMetrics
     });
@@ -110,6 +93,7 @@ describe('LambdaLogger' ,  () => {
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(logEntry.data).toEqual(expectedData);
     expect(logEntry.metrics).toEqual(expectedMetrics);
+    expect(logEntry.aws.context).toEqual(context);
 
     restoreConsole();
   });
