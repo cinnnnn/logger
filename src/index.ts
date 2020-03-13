@@ -34,7 +34,7 @@ export class LambdaLogger {
    * @param level
    * @param data
    */
-  private writeLog: LogWriterFunction = (level, message, {data= {}, metrics= {}}) => {
+  private writeLog: LogWriterFunction = (level, message, {data= {}, metrics= {}} = {}) => {
     // We don't want to write any logs with a higher log level
     if (LogPriority[this.logLevel] < LogPriority[level]) {
       return;
@@ -84,9 +84,8 @@ export class LambdaLogger {
 }
 
 export type LogOptions = { data?: Log['data']; metrics?: Log['metrics'] };
-
-export type LogFunction = (message: Log['message'], options: LogOptions) => void;
-export type LogWriterFunction = (level: LOG_SEVERITY, message: Log['message'], options: LogOptions) => void;
+export type LogFunction = (message: Log['message'], options?: LogOptions) => void;
+export type LogWriterFunction = (level: LOG_SEVERITY, message: Log['message'], options?: LogOptions) => void;
 
 export type LoggerConstructorOptions = {
   service: string;
