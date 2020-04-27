@@ -106,7 +106,7 @@ export interface Log {
 
 interface LambdaLog extends Log {
   source: 'lambda';
-  aws: {
+  awsData: {
     context: {
       functionName?: string;
       functionVersion?: string;
@@ -186,7 +186,7 @@ export class LambdaLogger {
       message: message,
       data: data,
       metrics: metrics,
-      aws: {
+      awsData: {
         context: {
           functionName: this.context?.functionName,
           functionVersion: this.context?.functionVersion,
