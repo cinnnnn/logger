@@ -1,7 +1,7 @@
 {
     "name": "@tailwindapp/logger",
     "description": "Structured Logger for Tailwind",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "engines": {
         "node": ">=10.3.0"
     },
