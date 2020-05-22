@@ -40,7 +40,7 @@ describe('LambdaLogger' ,  () => {
 
     log.critical('Critical Message');
 
-    expect(console.log).toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalled();
 
     restoreConsole();
   });
@@ -61,9 +61,9 @@ describe('LambdaLogger' ,  () => {
       metrics: expectedMetrics
     });
 
-    const logEntry = JSON.parse(console.log['mock']['calls'][0][0]) ;
+    const logEntry = JSON.parse(console.error['mock']['calls'][0][0]) ;
 
-    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledTimes(1);
     expect(logEntry.data).toEqual(expectedData);
     expect(logEntry.metrics).toEqual(expectedMetrics);
 
@@ -88,12 +88,12 @@ describe('LambdaLogger' ,  () => {
       metrics: expectedMetrics
     });
 
-    const logEntry = JSON.parse(console.log['mock']['calls'][0][0]) ;
+    const logEntry = JSON.parse(console.error['mock']['calls'][0][0]) ;
 
-    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledTimes(1);
     expect(logEntry.data).toEqual(expectedData);
     expect(logEntry.metrics).toEqual(expectedMetrics);
-    expect(logEntry.aws.context).toEqual(context);
+    expect(logEntry.awsData.context).toEqual(context);
 
     restoreConsole();
   });

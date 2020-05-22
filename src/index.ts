@@ -206,8 +206,28 @@ export class LambdaLogger {
       },
     };
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(logEntry));
+    switch (level) {
+      case LOG_ALERT:
+      case LOG_EMERGENCY:
+      case LOG_CRITICAL:
+      case LOG_ERROR:
+        // eslint-disable-next-line no-console
+        console.error(JSON.stringify(logEntry));
+        return;
+      case LOG_WARNING:
+        // eslint-disable-next-line no-console
+        console.warn(JSON.stringify(logEntry));
+        return;
+      case LOG_NOTICE:
+      case LOG_INFO:
+        // eslint-disable-next-line no-console
+        console.info(JSON.stringify(logEntry));
+        return;
+      default:
+        // eslint-disable-next-line no-console
+        console.debug(JSON.stringify(logEntry));
+        break;
+    }
 
   };
 
