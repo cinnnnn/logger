@@ -73,14 +73,18 @@ log.debug('Debug Message') // ✔️ this will written
 
 See [RFC 5424](https://tools.ietf.org/html/rfc5424).
 
-### Data & Metrics
+### Data, Metrics & Errors
 You can also pass in additional `data` or `metrics` that are relevant to the logs.
+
+You can also pass in an `error` object if you are catching a thrown error somewhere.
 
 `data` must be in a `string: string` format
 
 `metrics` must be in a `string: number` format.
 
-This is so they can be properly auto-indexed by Elastic Search or Datadog.
+`error` can be any error that you catch. It will be unwrapped for you if possible
+
+This is so they can be properly auto-indexed by Elastic Search.
 
 ```ts
 const log = new LambdaLogger({
@@ -88,10 +92,13 @@ const log = new LambdaLogger({
   level: 'warning'
 });
 
+const loginError = new Error('Malformed login request');
+
 log.error('Login Failed!', {
   data: {
     username: 'piesupplies'
-  }
+  },
+  error: loginError
 });
 
 log.warning('Post rate is very high', {

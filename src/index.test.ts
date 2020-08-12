@@ -3,19 +3,8 @@
 import { LambdaLogger } from '.';
 import mockConsole from 'jest-mock-console';
 
-const context = {
-  functionName: 'function-name',
-  functionVersion: 'function-version',
-  invokedFunctionArn: 'function-arn',
-  memoryLimitInMB: 'function-memory',
-  awsRequestId: 'function-req-id',
-  logGroupName: 'function-log-group-name',
-  logStreamName: 'function-log-stream-name'
-};
-
 describe('LambdaLogger' ,  () => {
   const log = new LambdaLogger({
-    service: 'test',
     logLevel: 'error'
   });
 
@@ -56,9 +45,12 @@ describe('LambdaLogger' ,  () => {
       'user_count': 16
     };
 
+    const testError = new Error('Test Error');
+
     log.error('Error Message', {
       data: expectedData,
-      metrics: expectedMetrics
+      metrics: expectedMetrics,
+      error: testError
     });
 
     const logEntry = JSON.parse(console.error['mock']['calls'][0][0]) ;
@@ -66,6 +58,9 @@ describe('LambdaLogger' ,  () => {
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(logEntry.data).toEqual(expectedData);
     expect(logEntry.metrics).toEqual(expectedMetrics);
+    expect(logEntry.error.message).toEqual(testError.message);
+    expect(logEntry.error.stack).toEqual(testError.stack);
+    expect(logEntry.error.name).toEqual(testError.name);
 
     restoreConsole();
   });
@@ -81,8 +76,6 @@ describe('LambdaLogger' ,  () => {
       'user_count': 16
     };
 
-    log.setLambdaContext(context as any);
-
     log.alert('Alert Message', {
       data: expectedData,
       metrics: expectedMetrics
@@ -93,7 +86,6 @@ describe('LambdaLogger' ,  () => {
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(logEntry.data).toEqual(expectedData);
     expect(logEntry.metrics).toEqual(expectedMetrics);
-    expect(logEntry.awsData.context).toEqual(context);
 
     restoreConsole();
   });
