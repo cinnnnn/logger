@@ -1,8 +1,11 @@
 import { Context } from 'aws-lambda';
 import shortid from 'shortid';
 
-/** Optional `data` and `metric` values for  @public */
-export type LogOptions = { data?: Log['data']; metrics?: Log['metrics'] };
+/**
+ * Optional `data`, `metric`, and `error` options
+ * @public
+ */
+export type LogOptions = { data?: Log['data']; metrics?: Log['metrics']; error?: any };
 /** @public */
 export type LogFunction = (message: Log['message'], options?: LogOptions) => void;
 type LogWriterFunction = (level: LOG_SEVERITY, message: Log['message'], options?: LogOptions) => void;
@@ -12,8 +15,10 @@ type LogWriterFunction = (level: LOG_SEVERITY, message: Log['message'], options?
  * @public
  */
 export type LoggerConstructorOptions = {
-  service: string;
+  /** @deprecated Service is now pulled from CloudWatch */
+  service?: string;
   logLevel?: string;
+  /** @deprecated Context is now pulled from CloudWatch */
   context?: Context;
 };
 
@@ -74,10 +79,11 @@ export interface Log {
   status: LOG_SEVERITY;
   /**
    * The name of the application or service generating the log events.
+   * @deprecated We pull the stack from the CloudWatch logs directly now
    */
-  service: string;
+  service?: string;
   /**
-   * The message for the error.
+   * The message for the log.
    */
   message: string;
   /**
@@ -90,6 +96,16 @@ export interface Log {
    * with the log. Must be numeric
    */
   metrics: Record<string, number>;
+
+  /**
+   * Specific context related to errors
+   */
+  error?: {
+    message?: string;
+    name?: string;
+    stack?: string;
+    raw?: string;
+  };
   /**
    * A unique id for each
    * logger instance
@@ -106,7 +122,8 @@ export interface Log {
 
 interface LambdaLog extends Log {
   source: 'lambda';
-  awsData: {
+  /** @deprecated Context is now pulled from the CloudWatch logs directly */
+  awsData?: {
     context: {
       functionName?: string;
       functionVersion?: string;
@@ -138,10 +155,8 @@ let logInstance: LambdaLogger;
  */
 export class LambdaLogger {
   private logLevel: LOG_SEVERITY;
-  private service: string;
-  private context?: Context;
 
-  constructor({ service, context = null, logLevel = LOG_WARNING }: LoggerConstructorOptions) {
+  constructor({ logLevel = LOG_WARNING }: LoggerConstructorOptions) {
     if(!logInstance) {
       logInstance = this;
 
@@ -152,8 +167,6 @@ export class LambdaLogger {
       } else {
         this.logLevel = LOG_WARNING;
       }
-      this.service = service;
-      this.context = context;
     }
 
     return logInstance;
@@ -162,9 +175,11 @@ export class LambdaLogger {
   /**
    * Sets the lambda context after
    * the logger has been constructed
+   *
+   * @deprecated Context is now pulled from CloudWatch
    */
   setLambdaContext(context: Context): void {
-    this.context = context;
+    return;
   }
 
   /**
@@ -173,7 +188,7 @@ export class LambdaLogger {
    * current log level
    * @public
    */
-  private writeLog: LogWriterFunction = (level, message, {data= {}, metrics= {}} = {}) => {
+  private writeLog: LogWriterFunction = (level, message, {data= {}, metrics= {}, error} = {}) => {
     // We don't want to write any logs with a higher log level
     if (LogPriority[this.logLevel] < LogPriority[level]) {
       return;
@@ -182,21 +197,9 @@ export class LambdaLogger {
     const logEntry: LambdaLog = {
       source: 'lambda',
       status: level,
-      service: this.service ,
       message: message,
       data: data,
       metrics: metrics,
-      awsData: {
-        context: {
-          functionName: this.context?.functionName,
-          functionVersion: this.context?.functionVersion,
-          invokedFunctionArn: this.context?.invokedFunctionArn,
-          memoryLimitInMB: this.context?.memoryLimitInMB,
-          awsRequestId: this.context?.awsRequestId,
-          logGroupName: this.context?.logGroupName,
-          logStreamName: this.context?.logStreamName
-        }
-      },
       logId: logId,
       process: {
         memoryUsage: process.memoryUsage(),
@@ -205,6 +208,28 @@ export class LambdaLogger {
         versions: process.versions
       },
     };
+
+    // If there's an error we'll attempt to unwrap it
+    if (error) {
+      logEntry.error = {};
+      // If it's an acutal error object we'll extract
+      // the message and the stack
+      if (error instanceof Error) {
+        logEntry.error.message = error.message;
+        logEntry.error.name = error.name;
+        logEntry.error.stack = error.stack;
+      } else {
+        // Otherwise it could be anything so we'll go ahead and
+        // try to stringify it and add it
+        try {
+          // We'll truncate the full error at 1024 characters as to not
+          // blow up our logs
+          logEntry.error.raw = JSON.stringify(error).substr(0, 512);
+        } catch (jsonStringifyError) {
+          // We don't log inside the logger
+        }
+      }
+    }
 
     switch (level) {
       case LOG_ALERT:
