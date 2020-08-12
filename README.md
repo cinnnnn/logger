@@ -120,19 +120,8 @@ Currently the only logger we have is the `LambdaLogger`.
 
 Once we need another logger it would be good to split this into a generic log class, and specific loggers that extend it.
 
-The `LambdaLogger` will add extra context from the lambda event context.
-
 ```ts
 const log = new LambdaLogger({
-  service: 'image-service',
   level: 'warning'
 });
-
-
-export const handlePostEvent: APIGatewayProxyHandler = (event, context) => {
-  log.setLambdaContext(context);
-
-  return Promise.resolve(result);
-};
-
 ```
