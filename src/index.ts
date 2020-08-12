@@ -218,11 +218,6 @@ export class LambdaLogger {
         logEntry.error.message = error.message;
         logEntry.error.name = error.name;
         logEntry.error.stack = error.stack;
-        logEntry.error = {
-          message: error.message,
-          name: error.name,
-          stack: error.stack
-        };
       } else {
         // Otherwise it could be anything so we'll go ahead and
         // try to stringify it and add it
