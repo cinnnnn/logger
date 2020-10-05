@@ -90,4 +90,45 @@ describe('LambdaLogger' ,  () => {
     restoreConsole();
   });
 
+  test('Logging Metrics without prefix', () => {
+    const restoreConsole = mockConsole('log');
+
+    const metrics = {
+      'users_saved': 25,
+      'dogs_saved': 962,
+    };
+
+    log.metrics(metrics);
+
+    const logEntry = JSON.parse(console.log['mock']['calls'][0][0]) ;
+
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(logEntry.metrics).toEqual(metrics);
+
+    restoreConsole();
+  });
+
+  test('Logging Metrics with prefix', () => {
+    const restoreConsole = mockConsole('log');
+
+    const metrics = {
+      'apples': 25,
+      'logYellowApples': 962,
+    };
+
+    const expectedMetrics = {
+      'fruit.apples': 25,
+      'fruit.logYellowApples': 962
+    };
+
+    log.metrics(metrics, 'fruit');
+
+    const logEntry = JSON.parse(console.log['mock']['calls'][0][0]) ;
+
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(logEntry.metrics).toEqual(expectedMetrics);
+
+    restoreConsole();
+  });
+
 });
