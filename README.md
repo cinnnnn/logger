@@ -112,6 +112,17 @@ log.warning('Post rate is very high', {
 
 ```
 
+### Metrics Only
+Metrics can also be logged directly, with an optional prefix.
+
+This allows you to send metrics to ES for monitoring, no matter what the log level of the logger is set to.
+
+```typescript
+Log.metrics({
+  'image_saved': 5,
+  'image_failed': 0
+}, 'pablo');
+```
 
 ## Specific Loggers
 
