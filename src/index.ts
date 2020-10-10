@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { Context } from 'aws-lambda';
 import shortid from 'shortid';
 
@@ -40,6 +41,7 @@ export const LOG_INFO  = 'info';
 export const LOG_DEBUG = 'debug';
 /** {@link https://tools.ietf.org/html/rfc5424 | RFC 5424} @public */
 export type LOG_SEVERITY = typeof LOG_EMERGENCY | typeof LOG_ALERT | typeof LOG_CRITICAL | typeof LOG_ERROR | typeof LOG_WARNING | typeof LOG_NOTICE | typeof LOG_INFO | typeof LOG_DEBUG;
+export type LOG_METRIC = 'metric';
 
 /**
  * Map of the numerical codes of severity
@@ -76,7 +78,7 @@ export interface Log {
    * Syslog level severity
    * {@link https://tools.ietf.org/html/rfc5424 | RFC 5424}
    */
-  status: LOG_SEVERITY;
+  status: LOG_SEVERITY | LOG_METRIC;
   /**
    * The name of the application or service generating the log events.
    * @deprecated We pull the stack from the CloudWatch logs directly now
@@ -90,12 +92,12 @@ export interface Log {
    * Any context we want to add
    * with the log. Must be a string
    */
-  data: Record<string, string>;
+  data?: Record<string, string>;
   /**
    * Any metrics we want to record
    * with the log. Must be numeric
    */
-  metrics: Record<string, number>;
+  metrics?: Record<string, number>;
 
   /**
    * Specific context related to errors
@@ -105,6 +107,14 @@ export interface Log {
     name?: string;
     stack?: string;
     raw?: string;
+    facebook?: {
+      message?: string;
+      type?: string;
+      is_transient?: string;
+      code?: string;
+      error_subcode?: string;
+      fbtrace_id?: string;
+    };
   };
   /**
    * A unique id for each
@@ -218,6 +228,17 @@ export class LambdaLogger {
         logEntry.error.message = error.message;
         logEntry.error.name = error.name;
         logEntry.error.stack = error.stack;
+      } else if (error.fbtrace_id) {
+        // If there's a `fbtrace_id` we assume that the
+        // error is an error
+        logEntry.error.facebook = {
+          fbtrace_id: `${error.fbtrace_id}`,
+          code: `${error.code}`,
+          is_transient: `${error.fbtrace_id}`,
+          error_subcode: `${error.error_subcode}`,
+          message: `${error.message}`,
+          type: `${error.type}`
+        };
       } else {
         // Otherwise it could be anything so we'll go ahead and
         // try to stringify it and add it
@@ -264,4 +285,53 @@ export class LambdaLogger {
   readonly notice: LogFunction = this.writeLog.bind(this, LOG_NOTICE);
   readonly info: LogFunction = this.writeLog.bind(this, LOG_INFO);
   readonly debug: LogFunction = this.writeLog.bind(this, LOG_DEBUG);
+  /**
+   * Log a set of metrics. These will always be sent to our elastic search cluster.
+   *
+   * To avoid collision with other metrics you can namespace them by passing
+   * in a prefix. This will add that prefix before all of your metric names
+   *
+   * If we were logging in Pablo we could write
+   *
+   * ```typescript
+   * Log.metrics({
+   *   'image_saved': 5,
+   *   'image_failed': 0
+   * }, 'pablo');
+   * ```
+   *
+   * The metrics would show up in our Elastic Search cluster
+   * as
+   * - `metrics.pablo.image_saved: 5`
+   * - `metrics.pablo.image_failed: 0`
+   *
+   * @param metrics An object with a {`string`: `number`} structure.
+   * @param prefix An optional prefix for all of the metric names
+   */
+  readonly metrics = (metrics: Record<string, number>, prefix = ''): void => {
+    const metricsToWrite: Record<string, number> = {};
+    if(prefix) {
+      for(const metricName in metrics) {
+        metricsToWrite[`${prefix}.${metricName}`] = metrics[metricName];
+      }
+    } else {
+      Object.assign(metricsToWrite, metrics);
+    }
+
+    const logEntry: LambdaLog = {
+      source: 'lambda',
+      status: 'metric',
+      message: 'Metric Log',
+      metrics: metricsToWrite,
+      logId: logId,
+      process: {
+        memoryUsage: process.memoryUsage(),
+        pid: process.pid,
+        uptime: process.uptime(),
+        versions: process.versions
+      },
+    };
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(logEntry));
+  };
 }
