@@ -23,6 +23,21 @@ export type LoggerConstructorOptions = {
   context?: Context;
 };
 
+/**
+ * Options when logging metrics
+ */
+export type MetricsOptions = {
+  /**
+   * The prefix you want all of your metrics to have
+   */
+  prefix?: string;
+  /**
+   * Any context you want under a `data` key in the
+   * log
+   */
+  context?: Record<string, string>;
+};
+
 /** Emergency: system is unusable @public */
 export const LOG_EMERGENCY = 'emerg';
 /** Alert: action must be taken immediately @public */
@@ -234,7 +249,7 @@ export class LambdaLogger {
         logEntry.error.facebook = {
           fbtrace_id: `${error.fbtrace_id}`,
           code: `${error.code}`,
-          is_transient: `${error.fbtrace_id}`,
+          is_transient: `${error.is_transient}`,
           error_subcode: `${error.error_subcode}`,
           message: `${error.message}`,
           type: `${error.type}`
@@ -285,6 +300,7 @@ export class LambdaLogger {
   readonly notice: LogFunction = this.writeLog.bind(this, LOG_NOTICE);
   readonly info: LogFunction = this.writeLog.bind(this, LOG_INFO);
   readonly debug: LogFunction = this.writeLog.bind(this, LOG_DEBUG);
+
   /**
    * Log a set of metrics. These will always be sent to our elastic search cluster.
    *
@@ -305,17 +321,68 @@ export class LambdaLogger {
    * - `metrics.pablo.image_saved: 5`
    * - `metrics.pablo.image_failed: 0`
    *
-   * @param metrics An object with a {`string`: `number`} structure.
-   * @param prefix An optional prefix for all of the metric names
+   * @param metrics The metrics we want to log
+   * @param prefix An optional prefix for the metrics
    */
-  readonly metrics = (metrics: Record<string, number>, prefix = ''): void => {
+  public metrics (metrics: Record<string, number>, prefix?: string): void;
+
+  /**
+   * Log a set of metrics. These will always be sent to our elastic search cluster.
+   *
+   * To avoid collision with other metrics you can namespace them by passing
+   * in a prefix. This will add that prefix before all of your metric names
+   *
+   * If we were logging in Pablo we could write
+   *
+   * ```typescript
+   * Log.metrics({
+   *   'image_saved': 5,
+   *   'image_failed': 0
+   * }, 'pablo');
+   * ```
+   *
+   * The metrics would show up in our Elastic Search cluster
+   * as
+   * - `metrics.pablo.image_saved: 5`
+   * - `metrics.pablo.image_failed: 0`
+   *
+   * @param metrics The metrics we want to log
+   * @param options An optional prefix or context
+   */
+  public metrics (metrics: Record<string, number>, options?: MetricsOptions): void;
+
+  /**
+   * {@inheritdoc}
+   */
+  public metrics (metrics: Record<string, number>, options: string | MetricsOptions = ''): void  {
     const metricsToWrite: Record<string, number> = {};
-    if(prefix) {
+    const contextToWrite: Record<string, string> = {};
+    let opts: MetricsOptions;
+    if (typeof options === 'string') {
+      opts = {prefix: options};
+    } else if(options) {
+      opts = options;
+    } else {
+      opts = {};
+    }
+
+    // If we have a prefix we'll prefix the context and the
+    // metrics
+    if(opts.prefix) {
       for(const metricName in metrics) {
-        metricsToWrite[`${prefix}.${metricName}`] = metrics[metricName];
+        metricsToWrite[`${opts.prefix}.${metricName}`] = metrics[metricName];
+      }
+      // We may or may not have a context
+      if(opts.context) {
+        for(const contextKey in opts.context) {
+          contextToWrite[`${opts.prefix}.${contextKey}`] = opts.context[contextKey];
+        }
       }
     } else {
       Object.assign(metricsToWrite, metrics);
+      if(opts.context) {
+        Object.assign(contextToWrite, opts.context);
+      }
     }
 
     const logEntry: LambdaLog = {
@@ -323,6 +390,7 @@ export class LambdaLogger {
       status: 'metric',
       message: 'Metric Log',
       metrics: metricsToWrite,
+      data: contextToWrite,
       logId: logId,
       process: {
         memoryUsage: process.memoryUsage(),
@@ -333,5 +401,5 @@ export class LambdaLogger {
     };
     // eslint-disable-next-line no-console
     console.log(JSON.stringify(logEntry));
-  };
+  }
 }
