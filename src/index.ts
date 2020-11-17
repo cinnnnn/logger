@@ -354,16 +354,14 @@ export class LambdaLogger {
   /**
    * {@inheritdoc}
    */
-  public metrics (metrics: Record<string, number>, options: string | MetricsOptions = ''): void  {
+  public metrics (metrics: Record<string, number>, options: string | MetricsOptions = {}): void  {
     const metricsToWrite: Record<string, number> = {};
     const contextToWrite: Record<string, string> = {};
     let opts: MetricsOptions;
     if (typeof options === 'string') {
       opts = {prefix: options};
-    } else if(options) {
-      opts = options;
     } else {
-      opts = {};
+      opts = options;
     }
 
     // If we have a prefix we'll prefix the context and the
