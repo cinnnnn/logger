@@ -123,7 +123,7 @@ log.warning('Post rate is very high', {
 ```
 
 ### Metrics Only
-Metrics can also be logged directly, with an optional prefix.
+Metrics can also be logged directly, with an optional prefix and context.
 
 This allows you to send metrics to ES for monitoring, no matter what the log level of the logger is set to.
 
@@ -131,7 +131,12 @@ This allows you to send metrics to ES for monitoring, no matter what the log lev
 Log.metrics({
   'image_saved': 5,
   'image_failed': 0
-}, 'pablo');
+}, {
+  prefix: 'pablo',
+  context: {
+    'original_url': 'https://i.imgur.com/YX0SDSW.jpeg'
+  }
+});
 ```
 
 ## Specific Loggers
