@@ -4,9 +4,19 @@ The purpose of the Tailwind Logger is to provide a way to create well typed, str
 This will allow services like Elastic Search or Datadog to properly index all fields on the log.
 
 ## Installation
+To install the Instagram Data Service client you must first configure your project to pull from GitHub's npm registry.
 
+To do this, create a `.npmrc` file in the root of your project where the `package.json` file sits.
+
+In the `.npmrc` file put these contents.
+
+```
+registry=https://npm.pkg.github.com/tailwind
+```
+
+After you've correctly set up the `.npmrc` file run
 ```bash
-npm install @tailwindapp/logger
+npm install @tailwind/logger
 ```
 
 ## Usage

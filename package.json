@@ -42,7 +42,7 @@
         "typescript": "^3.8.3"
     },
     "scripts": {
-        "prepublishOnly": "tsc",
+        "prepublishOnly": "rm -rf dist && tsc",
         "test": "jest",
         "lint": "eslint",
         "build": "tsc",
