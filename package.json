@@ -1,16 +1,15 @@
 {
-    "name": "@tailwindapp/logger",
+    "name": "@tailwind/logger",
     "description": "Structured Logger for Tailwind",
     "version": "0.2.0",
     "engines": {
         "node": ">=10.3.0"
     },
-    "private": false,
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "repository": {
         "type": "git",
-        "url": "https://github.com/tailwind/logger"
+        "url": "git@github.com:tailwind/logger.git"
     },
     "dependencies": {
         "shortid": "^2.2.15"
